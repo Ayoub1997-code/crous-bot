@@ -1,40 +1,42 @@
-import time
 import requests
 from bs4 import BeautifulSoup
 from telegram import Bot
+import time
 
-TOKEN = "8480400096:AAGr6kWcGLO7SUlc7BIjfdPbeAVQHaTYEKI"
-CHAT_ID = "5653608572"
+# 🛠️ أدخل هنا رمز البوت الخاص بك (Token) ومعرف المحادثة (chat_id)
+TELEGRAM_TOKEN = '8480400096:AAGr6kWcGLO7SUlc7BIjfdPbeAVQHaTYEKI'
+CHAT_ID = '5653608572'
 
-bot = Bot(token=TOKEN)
-URL = "https://trouverunlogement.lescrous.fr/logement"
+# إعداد البوت
+bot = Bot(token=TELEGRAM_TOKEN)
+url = "https://trouverunlogement.lescrous.fr/logement"
 
-def get_offers():
-    response = requests.get(URL)
-    soup = BeautifulSoup(response.text, "html.parser")
-    offers = []
+# لتجنب تكرار نفس العروض
+offres_vues = set()
 
-    # عدل هذا الجزء بناءً على هيكل الموقع
-    for offer_div in soup.find_all("div", class_="offre"):  # استبدل 'offre' بالكلاس الصحيح
-        title = offer_div.find("h3").text.strip()
-        description = offer_div.find("p").text.strip()
-        offers.append(f"{title}\n{description}")
+print("🤖 Bot CROUS démarre...")
 
-    return offers
+while True:
+    try:
+        print("🔍 Vérification des nouvelles offres...")
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-def send_offers():
-    offers = get_offers()
-    if offers:
-        message = "🏠 العروض المتاحة الآن:\n\n" + "\n\n".join(offers)
-    else:
-        message = "لا توجد عروض متاحة حالياً."
-    bot.send_message(chat_id=CHAT_ID, text=message)
+        offres = soup.find_all("a", class_="card-annonce")
 
-def main():
-    while True:
-        send_offers()
-        time.sleep(300)  # كل 5 دقائق
+        for offre in offres:
+            lien = "https://trouverunlogement.lescrous.fr" + offre.get("href")
+            titre = offre.get_text(strip=True)
 
-if __name__ == "__main__":
-    main()
+            if lien not in offres_vues:
+                offres_vues.add(lien)
+                message = f"🏠 Offre logement CROUS:\n{titre}\n{lien}"
+                bot.send_message(chat_id=CHAT_ID, text=message)
+                print("✅ Nouvelle offre envoyée:", lien)
 
+        print("⏸️ Attente de 1 heure avant la prochaine vérification...\n")
+        time.sleep(3600)
+
+    except Exception as e:
+        print("⚠️ Une erreur est survenue:", e)
+        time.sleep(300)  # Attendre 5 minutes avant de réessayer
