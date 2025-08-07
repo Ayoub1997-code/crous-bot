@@ -1,3 +1,4 @@
+bot.send_message(chat_id=CHAT_ID, text="🤖 البوت بدأ العمل بنجاح!")
 import time
 import requests
 from bs4 import BeautifulSoup
