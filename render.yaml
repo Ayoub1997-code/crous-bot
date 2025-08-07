@@ -1,0 +1,7 @@
+services:
+  - type: worker
+    name: crous-bot
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: bash start.sh
